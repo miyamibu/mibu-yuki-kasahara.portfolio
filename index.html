@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ポートフォリオ（ローカル）</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="container">
+      <h1>ポートフォリオ</h1>
+      <p class="muted">
+        このサイトはローカル中心で動作します（データはブラウザのローカルに保存）。
+        自動取得は任意で、参考値としてオンラインAPIを参照します（厳密なリアルタイムではありません）。
+      </p>
+    </header>
+
+    <main class="container">
+      <section class="card">
+        <div class="card-header">
+          <h2>設定</h2>
+        </div>
+        <div class="settings-grid">
+          <label class="field">
+            <span class="label">USD/JPY（為替）</span>
+            <input id="usdJpyInput" type="number" inputmode="decimal" step="0.01" min="0" />
+          </label>
+          <div class="actions">
+            <button id="saveFxBtn" class="btn">為替を保存</button>
+            <button id="resetDataBtn" class="btn btn-secondary">データ初期化</button>
+          </div>
+        </div>
+
+        <div class="auto-settings">
+          <div class="auto-row">
+            <label class="check">
+              <input id="autoFetchChk" type="checkbox" />
+              <span>起動時に自動取得（株価・為替）</span>
+            </label>
+            <label class="field small">
+              <span class="label">更新間隔（分）</span>
+              <input id="intervalInput" type="number" min="1" step="1" value="60" />
+            </label>
+            <button id="refreshNowBtn" class="btn">今すぐ更新</button>
+          </div>
+          <div class="muted tiny">
+            最終更新: 株価 <span id="lastPricesAt">-</span> / 為替 <span id="lastFxAt">-</span>
+            <span class="sep">|</span>
+            データソース: 株価 Stooq / 為替 exchangerate.host（目安の参考値）
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-header row">
+          <h2>保有銘柄</h2>
+          <div class="row-actions">
+            <button id="exportBtn" class="btn btn-secondary">エクスポート（JSON）</button>
+            <label class="btn btn-secondary file-input">
+              インポート（JSON）
+              <input id="importInput" type="file" accept="application/json" />
+            </label>
+          </div>
+        </div>
+
+        <form id="addForm" class="add-form">
+          <label class="field">
+            <span class="label">市場</span>
+            <select name="market" required>
+              <option value="US">米国株（USD）</option>
+              <option value="JP">日本株（JPY）</option>
+            </select>
+          </label>
+          <label class="field">
+            <span class="label">ティッカー/銘柄コード</span>
+            <input name="symbol" type="text" required placeholder="例: AAPL / 7203" />
+          </label>
+          <label class="field">
+            <span class="label">名称（任意）</span>
+            <input name="name" type="text" placeholder="例: Apple / トヨタ" />
+          </label>
+          <label class="field">
+            <span class="label">保有株数</span>
+            <input name="shares" type="number" inputmode="decimal" step="0.0001" min="0" required />
+          </label>
+          <label class="field">
+            <span class="label">現在株価（自動）</span>
+            <div class="row">
+              <span id="addPricePreview" class="chip">-</span>
+              <button id="fetchAddPriceBtn" class="btn btn-secondary" type="button">再取得</button>
+            </div>
+          </label>
+          <label class="field">
+            <span class="label">評価額（円）プレビュー</span>
+            <span id="addValuePreview" class="num">-</span>
+          </label>
+          <button class="btn" type="submit">追加</button>
+        </form>
+
+        <div class="table-wrap">
+          <table class="table" id="holdingsTable">
+            <thead>
+              <tr>
+                <th>市場</th>
+                <th>ティッカー</th>
+                <th>名称</th>
+                <th class="num">保有株数</th>
+                <th class="num">平均取得単価</th>
+                <th class="num">現在株価</th>
+                <th class="num">評価額（円）</th>
+                <th class="num">評価損益（円）</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- rows rendered by JS -->
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="6" class="num">米国株 合計（円）</td>
+                <td class="num" id="totalUsJpy">-</td>
+                <td></td>
+                <td></td>
+              </tr>
+              <tr>
+                <td colspan="6" class="num">日本株 合計（円）</td>
+                <td class="num" id="totalJpJpy">-</td>
+                <td></td>
+                <td></td>
+              </tr>
+              <tr>
+                <td colspan="6" class="num strong">ポートフォリオ合計（円）</td>
+                <td class="num strong" id="totalAllJpy">-</td>
+                <td></td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-header">
+          <h2>使い方メモ</h2>
+        </div>
+        <ul class="notes">
+          <li>価格は手動入力です。米国株は株価をUSDで入力、評価額はUSD/JPY為替で円換算します。</li>
+          <li>日本株は株価・評価額ともに円で表示します。</li>
+          <li>データはブラウザのローカルストレージに自動保存されます。必要に応じてJSONでインポート/エクスポートできます。</li>
+        </ul>
+      </section>
+    </main>
+
+    <footer class="container footer muted">
+      <small>ローカル用ポートフォリオビューア — 外部通信なし</small>
+    </footer>
+
+    <script src="./app.js"></script>
+  </body>
+  </html>
